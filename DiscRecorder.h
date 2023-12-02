@@ -31,6 +31,7 @@ public:
 
 	LONG GetLegacyNumber(); // to get legacy number
 
+
 	CString GetProductID(); // to get product id
 	CString GetVendorID(); // to get vendor id
 	CString GetVolumeName(); // to get volume name

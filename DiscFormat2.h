@@ -27,5 +27,6 @@ public:
 	inline void SetCloseMedia(bool closeMedia) { m_closeMedia = closeMedia; };
 
 	bool Burn(IStream* data);
+
 };
 

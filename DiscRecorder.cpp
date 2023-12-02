@@ -162,6 +162,7 @@ CString DiscRecorder::GetVendorID() {
 }
 
 
+
 ULONG DiscRecorder::GetTotalVolumePaths() {
 	if (m_volumePathNames != NULL)
 	{

@@ -21,6 +21,7 @@ int main() {
         return 1;
     }
 
+
     std::wcout << L"Enumeration succeeded." << std::endl;
 
     CoUninitialize(); // COM kitaplığını kapat
