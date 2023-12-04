@@ -81,21 +81,23 @@ ULONG DiscFormat2::GetTotalNumberSupportedMediaTypes() {
 }
 
 bool DiscFormat2::Burn(IStream *data) {//add encryption and notifcation part to track the progress
+
 	if (m_discFormatData==NULL || data == nullptr)
 	{
 		return false;
 	}
-	m_discFormatData->put_ForceMediaToBeClosed(m_closeMedia ? VARIANT_TRUE : VARIANT_FALSE);
+
+	//Is VARIANT_TRUE if the next write session ends by marking the disc as closed to subsequent write sessions.
+	m_discFormatData->put_ForceMediaToBeClosed(m_closeMedia ? VARIANT_TRUE : VARIANT_FALSE);//Our case it should be true
+
 	m_result = m_discFormatData->Write(data);
 	if (FAILED(m_result))
 	{
 		m_errorMessage.Format(_T("IDiscFormat2Data->Write Failed! Error:0x%08x"), m_result);
 
 		return false;
-	}return true;
+
+	}
+	return true;
+
 }
-
-
-
-
-
