@@ -8,6 +8,17 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
+#include <afx.h>
+#include <afxwin.h>         // MFC core and standard components
+#include <afxext.h>         // MFC extensions
+#include <afxcmn.h>			// MFC support for Windows Common Controls
+#include <afxctl.h>
+#include <afxmt.h>
+#include <afxdisp.h>        // MFC Automation classes
 #include "framework.h"
-
+#include <imapi2.h>
+#include <imapi2error.h>
+#include <imapi2fs.h>
+#include <imapi2fserror.h>
+#include <Shlwapi.h>
 #endif //PCH_H

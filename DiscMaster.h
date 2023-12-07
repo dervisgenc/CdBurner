@@ -1,6 +1,4 @@
 #pragma once
-#include <imapi2.h>
-#include <atlstr.h>
 
 class DiscMaster
 {

@@ -1,4 +1,5 @@
 #include "DiscMaster.h"
+#include "pch.h"
 
 bool DiscMaster::initialize() {
 
