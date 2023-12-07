@@ -1,6 +1,4 @@
 #pragma once
-#include <imapi2.h>
-#include <atlstr.h>
 class DiscRecorder
 {
 private:
@@ -22,7 +20,7 @@ public:
 	bool ReleaseExclusiveAccess(); // to release exclusive access
 
 	CString ExclusiveAccessOwner(); // to get exclusive access owner
-	
+
 	bool EjectMedia(); // to eject media
 	bool CloseTray(); // to close tray
 
@@ -37,11 +35,11 @@ public:
 	CString GetVolumeName(); // to get volume name
 	CString GetProductRevision(); // to get volume path
 
-	ULONG GetTotalVolumePaths(){}
+	ULONG GetTotalVolumePaths();
 	CString GetVolumePath(ULONG index);
 
 
 
 
 
-};	 
+};

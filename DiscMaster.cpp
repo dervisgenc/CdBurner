@@ -1,5 +1,9 @@
-#include "DiscMaster.h"
+// DiscMaster.cpp : implementation file
+//
+
 #include "pch.h"
+#include "CdBurnApp.h"
+#include "DiscMaster.h"
 
 bool DiscMaster::initialize() {
 
@@ -146,3 +150,9 @@ long DiscMaster::getNumberOfDevices() {
     return total_number;
 
 }
+
+
+
+// DiscMaster message handlers
+
+

@@ -1,5 +1,12 @@
+// DiscRecorder.cpp : implementation file
+//
+
+#include "pch.h"
+#include "CdBurnApp.h"
 #include "DiscRecorder.h"
 
+
+// DiscRecorder
 DiscRecorder::DiscRecorder() : m_recorder(NULL), m_volumePathNames(NULL)
 {
 }
@@ -12,7 +19,7 @@ DiscRecorder::~DiscRecorder()
 
 bool DiscRecorder::initialize(const CString& recorderUniqueId) {
 	m_recorderUniqueId = recorderUniqueId;
-	
+
 	if (m_recorder == NULL)
 	{
 		m_result = CoCreateInstance(__uuidof(MsftDiscRecorder2), NULL, CLSCTX_INPROC_SERVER,
@@ -25,7 +32,7 @@ bool DiscRecorder::initialize(const CString& recorderUniqueId) {
 				return true;
 			}
 		}
-		
+
 		m_errorMessage.Format(_T("Couldn't initialize the IDiscRecorder2 - Error:0x%08x"), m_result);        //create a error message that show hresult code of error in hex format
 		return false;
 
@@ -53,7 +60,7 @@ bool DiscRecorder::ReleaseExclusiveAccess() {
 		}
 	}
 	m_errorMessage.Format(_T("ReleaseExclusiveAccess	 error IDiscRecorder2 - Error:0x%08x"), m_result);
-		return false;
+	return false;
 }
 
 CString DiscRecorder::ExclusiveAccessOwner() {
@@ -124,7 +131,7 @@ LONG DiscRecorder::GetLegacyNumber() {
 		m_result = m_recorder->get_LegacyDeviceNumber(&legacyNumber);
 
 		return legacyNumber;
-		
+
 	}
 }
 
