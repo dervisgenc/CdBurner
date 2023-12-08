@@ -7,16 +7,22 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CdBurnApp", "CdBurnApp.vcxp
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Debug|Win32.Build.0 = Debug|Win32
 		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Debug|x64.ActiveCfg = Debug|x64
 		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Debug|x64.Build.0 = Debug|x64
 		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Debug|x86.ActiveCfg = Debug|Win32
 		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Debug|x86.Build.0 = Debug|Win32
+		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Release|Win32.ActiveCfg = Release|Win32
+		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Release|Win32.Build.0 = Release|Win32
 		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Release|x64.ActiveCfg = Release|x64
 		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Release|x64.Build.0 = Release|x64
 		{A8777F31-7B22-4EE7-A519-F02449C3A549}.Release|x86.ActiveCfg = Release|Win32

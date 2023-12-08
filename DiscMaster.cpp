@@ -38,68 +38,20 @@ bool DiscMaster::initialize() {
 
 
 }
+CString DiscMaster::getId(long index)
+{
 
-//bool DiscMaster::enumerateDiscMasters() {
-//
-//    CComPtr<IEnumVARIANT> pEnum;        //o hold result list
-//    m_result = m_discMaster->get__NewEnum(&pEnum);
-//    if (FAILED(m_result)) {
-//        m_errorMessage.Format(_T("get__NewEnum error IDiscMaster2 - Error:0x%08x"), m_result);
-//        return false;
-//    }
-//
-//    VARIANT varItem;
-//    VariantInit(&varItem);
-//
-//    while (pEnum->Next(1, &varItem, NULL) == S_OK)
-//    {
-//        CComPtr<IDiscRecorder2> pRecorder;
-//        m_result = varItem.pdispVal->QueryInterface(IID_PPV_ARGS(&pRecorder));
-//        if (SUCCEEDED(m_result))
-//        {
-//        }
-//
-//        VariantClear(&varItem);
-//    }
-//
-//
-//}
+    BSTR	uniqueID = NULL;
+    m_result = m_discMaster->get_Item(index, &uniqueID);
+    if (FAILED(m_result))
+    {
+        m_errorMessage.Format(_T("IDiscMaster2->get_Item(%d) failed! - Error:0x%08x"),
+            index, m_result);
+        return _T("");
+    }
 
-//bool DiscMaster::enumerateDiscMasters   () {
-//
-//	CComPtr<IEnumVARIANT> pEnum;        //o hold result list
-//	m_result = m_discMaster->get__NewEnum(&pEnum);
-//	if (FAILED(m_result)) {
-//		m_errorMessage.Format(_T("get__NewEnum error IDiscMaster2 - Error:0x%08x"), m_result);
-//		return false;
-//	}
-//
-//	VARIANT varItem;
-//	VariantInit(&varItem);
-//
-//	while (pEnum->Next(1, &varItem, NULL) == S_OK)
-//	{
-//		CComPtr<IDiscRecorder2> pRecorder;
-//		m_result = varItem.pdispVal->QueryInterface(IID_PPV_ARGS(&pRecorder));
-//		if (SUCCEEDED(m_result))
-//		{
-//			BSTR bstrUniqueID;
-//			m_result = m_discMaster->get_Item(&bstrUniqueID);
-//			if (SUCCEEDED(m_result))
-//			{
-//				CString strUniqueID(bstrUniqueID);
-//				m_listDiscMasters.AddTail(strUniqueID);
-//				SysFreeString(bstrUniqueID);
-//			}
-//		}
-//
-//		VariantClear(&varItem);
-//	}
-//
-//	return true;
-//
-//}
-
+    return uniqueID;
+}
 
 
 bool DiscMaster::enumerateDiscMasters() {
@@ -118,17 +70,13 @@ bool DiscMaster::enumerateDiscMasters() {
         if (SUCCEEDED(m_result)) {
             for (LONG iCount = 0; iCount < lValue; iCount++) {
                 m_result = m_discMaster->get_Item(iCount, &bstrDeviceName);
-                _tprintf(TEXT("\nUnique identifier of the disc device associated with index %d is: %s\n"), iCount, bstrDeviceName);
+                //_tprintf(TEXT("\nUnique identifier of the disc device associated with index %d is: %s\n"), iCount, bstrDeviceName);
             }
         }
 
-        // Prompt the user to unhook or add drives
-        if (iCounter < 1) {
-            MessageBox(NULL, TEXT("Please un-hook or add drives and hit OK"), TEXT("Manual Action"), MB_OK);
-            _tprintf(TEXT("\nGetting the altered configuration ... \n"));
-        }
+        
         iCounter++;
-    } while (iCounter < 2);
+    } while (iCounter < 1);
     return true;
 }
 

@@ -193,6 +193,7 @@
     <ClInclude Include="DiscRecorder.h" />
     <ClInclude Include="Encrypt.h" />
     <ClInclude Include="File.h" />
+    <ClInclude Include="FileList.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
@@ -208,6 +209,7 @@
     <ClCompile Include="DiscRecorder.cpp" />
     <ClCompile Include="Encrypt.cpp" />
     <ClCompile Include="File.cpp" />
+    <ClCompile Include="FileList.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -18,6 +18,7 @@ public:
     bool initialize();  //to initialize DiscMaster interface
     long getNumberOfDevices(); //to get number of devices
     bool enumerateDiscMasters(); //to enumerate devices
+    CString getId(long index); //to get id of device
 
 };
 
