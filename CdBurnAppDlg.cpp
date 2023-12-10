@@ -22,6 +22,9 @@
 #define DL_DVD_MEDIA	2
 
 #define CLIENT_NAME		_T("Cd Burner")
+
+#define WM_BURN_STATUS_MESSAGE	WM_APP+300
+#define WM_BURN_FINISHED		WM_APP+301
 // CAboutDlg dialog used for App About
 
 class CAboutDlg : public CDialogEx
@@ -77,20 +80,113 @@ void CCdBurnAppDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, Device_List, m_deviceComboBox);
-	DDX_Control(pDX, IDC_COMBO3, m_mediaTypeCombo);
+
+	DDX_Control(pDX, IDC_LIST, m_fileListbox);
+	DDX_Control(pDX, IDC_CAPACITY, m_capacityProgress);
+	DDX_Control(pDX, IDC_MEDIA_TYPE_COMBO, m_mediaTypeCombo);
+	DDX_Control(pDX, IDC_SUPPORTED_MEDIA_TYPES, m_supportedMediaTypes);
+	DDX_Text(pDX, IDC_VOLUME_NAME, m_volumeLabel);
 }
 
 BEGIN_MESSAGE_MAP(CCdBurnAppDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON() 
-	ON_BN_CLICKED(IDC_BUTTON1, &CCdBurnAppDlg::OnBnClickedButton1)
-	ON_CBN_SELCHANGE(IDC_COMBO2, &CCdBurnAppDlg::OnCbnSelchangeCombo2)
 	ON_CBN_SELCHANGE(Device_List, &CCdBurnAppDlg::OnCbnSelchangeList)
+	ON_LBN_SELCHANGE(IDC_LIST, &CCdBurnAppDlg::OnLbnSelchangeList)
+	ON_BN_CLICKED(IDC_ADD, &CCdBurnAppDlg::OnBnClickedAdd)
+	ON_BN_CLICKED(IDC_FOLDER, &CCdBurnAppDlg::OnBnClickedFolder)
+	ON_WM_DESTROY()
+	ON_BN_CLICKED(IDC_BURN_BUTTON, &CCdBurnAppDlg::OnBnClickedBurnButton)
+	ON_CBN_SELCHANGE(IDC_MEDIA_TYPE_COMBO, &CCdBurnAppDlg::OnCbnSelchangeMediaTypeCombo)
+	ON_BN_CLICKED(IDC_REMOVE, &CCdBurnAppDlg::OnBnClickedRemove)
 END_MESSAGE_MAP()
 
 
 // CCdBurnAppDlg message handlers
+
+void CCdBurnAppDlg::SetCancelBurning(bool bCancel)
+{
+	CSingleLock singleLock(&m_critSection);
+	m_cancelBurn = bCancel;
+}
+
+bool CCdBurnAppDlg::GetCancelBurning()
+{
+	CSingleLock singleLock(&m_critSection);
+	return m_cancelBurn;
+}
+
+UINT CCdBurnAppDlg::BurnThread(LPVOID pParam)
+{
+	CCdBurnAppDlg* pThis = (CCdBurnAppDlg*)pParam;
+
+	int selectedIndex = pThis->m_deviceComboBox.GetCurSel();
+	if (selectedIndex == -1)
+	{
+		pThis->SendMessage(WM_BURN_FINISHED, 0, (LPARAM)_T("Error: No Device Selected"));
+		return 0;
+	}
+	DiscRecorder* pOrginalDiscRecorder = (DiscRecorder*)pThis->m_deviceComboBox.GetItemDataPtr(selectedIndex);
+	if (pOrginalDiscRecorder == NULL)
+	{
+		pThis->SendMessage(WM_BURN_FINISHED, 0, (LPARAM)_T("Error: No Device Selected"));
+		return 0;
+	}
+	if (pThis->GetCancelBurning()) {
+		pThis->SendMessage(WM_BURN_FINISHED, 0, (LPARAM)_T("Cancalled"));
+		return 0;
+
+	}
+	pThis->SendMessage(WM_BURN_STATUS_MESSAGE,0,(LPARAM)_T("Initializing..."));
+	DiscRecorder discRecorder;
+	CString errorMessage;
+	if (!discRecorder.initialize(pOrginalDiscRecorder->GetUniqueId())) {
+		errorMessage.Format(_T("Failed to initialize recorder - Unique ID:%s"),
+			(LPCTSTR)pOrginalDiscRecorder->GetUniqueId());
+		pThis->SendMessage(WM_BURN_FINISHED, discRecorder.GetResult(),
+			(LPARAM)(LPCTSTR)errorMessage);
+	}
+	else
+	{
+		DiscFormat2Data discFormat;
+		if(!discRecorder.AcquireExclusiveAccess(true, CLIENT_NAME)){
+			errorMessage.Format(_T("Failed: %s is exclusive owner"),
+				(LPCTSTR)discRecorder.ExclusiveAccessOwner());
+			pThis->SendMessage(WM_BURN_FINISHED, discRecorder.GetResult(),
+				(LPARAM)(LPCTSTR)errorMessage);
+		}
+		else {
+			// Get the media type
+			IMAPI_MEDIA_PHYSICAL_TYPE mediatype = IMAPI_MEDIA_TYPE_UNKNOWN;
+			discFormat.GetInterface()->get_CurrentPhysicalMediaType(&mediatype);
+
+			//create file sysstem //add encryption
+			IStream* dataStream = NULL;
+			if (!CreateMediaFileSystem(pThis,mediatype,&dataStream))
+			{
+				return false;
+			}
+			discFormat.SetCloseMedia(pThis->m_closeMedia);
+
+			discFormat.Burn(dataStream);
+
+			dataStream->Release();
+
+			// eject if you want
+			// discRecorder.EjectMedia();
+		}
+		discRecorder.ReleaseExclusiveAccess();
+		pThis->SendMessage(WM_BURN_FINISHED, discFormat.GetResult(),
+			(LPARAM)(LPCTSTR)discFormat.GetErrorMessage());
+	}
+	return 0;
+}
+
+bool CCdBurnAppDlg::CreateMediaFileSystem(CCdBurnAppDlg* pThis, IMAPI_MEDIA_PHYSICAL_TYPE mediaType,IStream** ppDataStream)
+{
+	return false;
+}
 
 BOOL CCdBurnAppDlg::OnInitDialog()
 {
@@ -121,6 +217,8 @@ BOOL CCdBurnAppDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 	AddRecordersToComboBox();
+	OnLbnSelchangeList();
+	enableBurnButton();
 	// TODO: Add extra initialization here
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -339,7 +437,7 @@ afx_msg void CCdBurnAppDlg::OnCbnSelchangeList(){
 
 	m_mediaTypeCombo.ResetContent();
 
-	int index = m_mediaTypeCombo.GetCurSel();
+	int index = m_deviceComboBox.GetCurSel();
 	if (index < 0) {
 		return;
 	}
@@ -347,7 +445,7 @@ afx_msg void CCdBurnAppDlg::OnCbnSelchangeList(){
 	DiscRecorder* discRecorder =
 		(DiscRecorder*)m_deviceComboBox.GetItemDataPtr(index);
 
-	if (!discRecorder == NULL)
+	if (discRecorder != NULL)
 	{
 		DiscFormat2Data discFormatData;
 		if (!discFormatData.initialize(discRecorder, CLIENT_NAME))
@@ -385,18 +483,10 @@ afx_msg void CCdBurnAppDlg::OnCbnSelchangeList(){
 	m_mediaTypeCombo.SetCurSel(0);
 	OnCbnSelchangeMediaTypeCombo();
 }
-afx_msg void CCdBurnAppDlg::OnCbnSelchangeMediaTypeCombo(){
-	int selectedIndex = m_mediaTypeCombo.GetCurSel();
-	if (selectedIndex == -1)
-	{
-		m_selectedMediaType = -1;
-	}
-	else
-	{
-		m_selectedMediaType = (int)m_mediaTypeCombo.GetItemData(selectedIndex);
-	}
 
-	UpdateCapacity();
+void CCdBurnAppDlg::OnLbnSelchangeBurnFileList()
+{
+	GetDlgItem(IDC_REMOVE)->EnableWindow(m_fileListbox.GetCurSel() != -1);
 }
 
 void CCdBurnAppDlg::UpdateCapacity()
@@ -421,7 +511,7 @@ void CCdBurnAppDlg::UpdateCapacity()
 		maxText = _T("8.5GB");
 		totalSize = 8500000000;
 	}
-	m_maxText.SetWindowText(maxText);
+	//m_maxText.SetWindowText(maxText);
 
 	//
 	// Calculate the size of the files
@@ -463,6 +553,145 @@ void CCdBurnAppDlg::UpdateCapacity()
 	}
 }
 
+void CCdBurnAppDlg::EnableBurnUI(BOOL enable)
+{
+	m_deviceComboBox.EnableWindow(enable);
+	m_mediaTypeCombo.EnableWindow(enable);
+	m_fileListbox.EnableWindow(enable);
+	GetDlgItem(IDC_ADD)->EnableWindow(enable);
+	GetDlgItem(IDC_FOLDER)->EnableWindow(enable);
+	GetDlgItem(IDC_REMOVE)->EnableWindow(enable);
+	GetDlgItem(IDC_BURN_BUTTON)->EnableWindow(enable);
+	
+
+}
+
 void CCdBurnAppDlg::OnBnClickedButton1(){}
 
+void CCdBurnAppDlg::OnDestroy()
+{
+	int itemCount = m_fileListbox.GetCount();
+	for (int itemIndex = 0; itemIndex < itemCount; itemIndex++)
+	{
+		delete (Base*)m_fileListbox.GetItemDataPtr(itemIndex);
+	}
+
+	itemCount = m_deviceComboBox.GetCount();
+	for (int itemIndex = 0; itemIndex < itemCount; itemIndex++)
+	{
+		delete (DiscRecorder*)m_deviceComboBox.GetItemDataPtr(itemIndex);
+	}
+
+
+	CDialog::OnDestroy();
+}
+
 void CCdBurnAppDlg::OnCbnSelchangeCombo2(){}
+
+void CCdBurnAppDlg::OnCbnSelchangeCombo3()
+{
+	int selectedIndex = m_mediaTypeCombo.GetCurSel();
+	if (selectedIndex == -1)
+	{
+		m_selectedMediaType = -1;
+	}
+	else
+	{
+		m_selectedMediaType = (int)m_mediaTypeCombo.GetItemData(selectedIndex);
+	}
+	UpdateCapacity();
+}
+
+
+void CCdBurnAppDlg::OnBnClickedAdd()
+{
+	CFileDialog fileDialog(TRUE, NULL, NULL, OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT, _T("All Files (*.*)|*.*||"), NULL, 0);
+	if (fileDialog.DoModal() == IDOK) {
+		File* pFile = new File(fileDialog.GetPathName());
+		int index = m_fileListbox.AddString(pFile->GetName());
+		m_fileListbox.SetItemDataPtr(index, pFile);
+		UpdateCapacity();
+		enableBurnButton();
+
+	}
+}
+void CCdBurnAppDlg::enableBurnButton()
+{
+	GetDlgItem(IDC_BURN_BUTTON)->EnableWindow(m_fileListbox.GetCount()>0);
+}
+
+void CCdBurnAppDlg::OnBnClickedBurnButton()
+{
+	if (m_isBurning)
+	{
+
+	}
+	else
+	{
+		
+		m_isBurning = true;
+		UpdateData();
+		EnableBurnUI(false);
+
+		AfxBeginThread(BurnThread, this, THREAD_PRIORITY_NORMAL);
+	}
+}
+
+
+void CCdBurnAppDlg::OnBnClickedFolder()
+{
+	BROWSEINFO bi = { 0 };
+	bi.hwndOwner = this->m_hWnd; \
+		bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_USENEWUI;
+	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+	if (!pidl)
+	{
+		return;
+	}
+	TCHAR selectedPath[MAX_PATH];
+	if (SHGetPathFromIDList(pidl, selectedPath))
+	{
+		Directory* pDirectory = new Directory(selectedPath);
+		int index = m_fileListbox.AddString(pDirectory->GetName());
+		m_fileListbox.SetItemDataPtr(index, pDirectory);
+		UpdateCapacity();
+		enableBurnButton();
+	}
+}
+
+
+void CCdBurnAppDlg::OnBnClickedRemove()
+{
+	int selection = m_fileListbox.GetCurSel();
+	if (selection != LB_ERR)
+	{
+		Base* pObject = (Base*)m_fileListbox.GetItemDataPtr(selection);
+		delete pObject;
+		m_fileListbox.DeleteString(selection);
+		UpdateCapacity();
+		OnLbnSelchangeList();
+		enableBurnButton();
+	}
+}
+
+
+void CCdBurnAppDlg::OnLbnSelchangeList()
+{
+	GetDlgItem(IDC_REMOVE)->EnableWindow(m_fileListbox.GetCurSel() != -1);
+}
+
+
+void CCdBurnAppDlg::OnCbnSelchangeMediaTypeCombo()
+{
+	int selectedIndex = m_mediaTypeCombo.GetCurSel();
+	if (selectedIndex == -1)
+	{
+		m_selectedMediaType = -1;
+	}
+	else
+	{
+		m_selectedMediaType = (int)m_mediaTypeCombo.GetItemData(selectedIndex);
+	}
+
+	UpdateCapacity();
+}

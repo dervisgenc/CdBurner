@@ -6,7 +6,7 @@ class Base : public CObject
 {
 protected:
 	CString m_path;
-	Base(const CString& filepath){m_path = filepath;}
+	Base(const CString& filepath);
 public:
 	virtual ~Base();
 	inline CString GetPath(){return m_path;}

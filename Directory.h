@@ -5,7 +5,7 @@
 
 #include "File.h"
 
-class Directory : Base
+class Directory : public Base
 {
 	DECLARE_DYNAMIC(Directory)
 protected:

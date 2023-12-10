@@ -9,6 +9,10 @@
 // Base
 
 
+Base::Base(const CString& filepath) : m_path(filepath)
+{
+}
+
 Base::~Base()
 {
 }
