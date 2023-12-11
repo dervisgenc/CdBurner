@@ -20,5 +20,9 @@
 #include <imapi2error.h>
 #include <imapi2fs.h>
 #include <imapi2fserror.h>
+#include <openssl/aes.h>
+#include <openssl/rand.h>
+#include <string>
+#include <vector>
 #include <Shlwapi.h>
 #endif //PCH_H

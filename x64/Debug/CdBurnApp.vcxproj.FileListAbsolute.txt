@@ -1,1 +1,4 @@
 C:\Users\Dervis\Desktop\CdBurnApp\x64\Debug\CdBurnApp.exe
+D:\App\x64\Debug\CdBurnApp.exe
+D:\App\x64\Debug\CdBurnApp.vcxproj.CopyComplete
+D:\App\x64\Debug\libcrypto-3-x64.dll

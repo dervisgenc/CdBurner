@@ -1,2 +1,16 @@
-﻿  CdBurnAppDlg.cpp
-  CdBurnApp.vcxproj -> C:\Users\Dervis\Desktop\CdBurnApp\x64\Debug\CdBurnApp.exe
+﻿  Encrypt.cpp
+D:\App\Encrypt.cpp(49,158): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/Encrypt.cpp')
+  
+D:\App\Encrypt.cpp(75,152): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/Encrypt.cpp')
+  
+D:\App\Encrypt.cpp(76,17): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file '/Encrypt.cpp')
+  
+D:\App\Encrypt.cpp(83,60): warning C4267: 'argument': conversion from 'size_t' to 'ULONG', possible loss of data
+  (compiling source file '/Encrypt.cpp')
+  
+  CdBurnApp.vcxproj -> D:\App\x64\Debug\CdBurnApp.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.
