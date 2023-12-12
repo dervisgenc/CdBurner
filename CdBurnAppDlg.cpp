@@ -185,7 +185,134 @@ UINT CCdBurnAppDlg::BurnThread(LPVOID pParam)
 
 bool CCdBurnAppDlg::CreateMediaFileSystem(CCdBurnAppDlg* pThis, IMAPI_MEDIA_PHYSICAL_TYPE mediaType,IStream** ppDataStream)
 {
-	return false;
+	IFileSystemImage* image = NULL;
+	IFileSystemImageResult* imageResult = NULL;
+	IFsiDirectoryItem* rootItem = NULL;
+	CString					message;
+	bool					returnVal = false;
+
+	HRESULT hr = CoCreateInstance(CLSID_MsftFileSystemImage,
+		NULL, CLSCTX_ALL, __uuidof(IFileSystemImage), (void**)&image);
+	if (FAILED(hr) || (image == NULL))
+	{
+		pThis->SendMessage(WM_BURN_FINISHED, hr,
+			(LPARAM)_T("Failed to create IFileSystemImage Interface"));
+		return false;
+	}
+
+	pThis->SendMessage(WM_BURN_STATUS_MESSAGE, 0, (LPARAM)_T("Creating File System..."));
+
+	image->put_FileSystemsToCreate((FsiFileSystems)(FsiFileSystemJoliet | FsiFileSystemISO9660));
+	image->put_VolumeName(pThis->m_volumeLabel.AllocSysString());
+	image->ChooseImageDefaultsForMediaType(mediaType);
+
+	//
+	// Get the image root
+	//
+	hr = image->get_Root(&rootItem);
+	if (SUCCEEDED(hr))
+	{
+		//
+		// Add Files and Directories to File System Image
+		//
+		int itemCount = pThis->m_fileListbox.GetCount();
+		for (int itemIndex = 0; itemIndex < itemCount; itemIndex++)
+		{
+			Base* pObject = (Base*)pThis->m_fileListbox.GetItemDataPtr(itemIndex);
+			ASSERT(pObject != NULL);
+			if (pObject == NULL)
+				continue;
+
+			CString fileName = pObject->GetName();
+			message.Format(_T("Adding \"%s\" to file system..."), (LPCTSTR)fileName);
+			pThis->SendMessage(WM_BURN_STATUS_MESSAGE, 0, (LPARAM)(LPCTSTR)message);
+
+			if (pObject->IsKindOf(RUNTIME_CLASS(File)))
+			{
+				File* pFileObject = (File*)pObject;
+				IStream* fileStream = pFileObject->createStream();
+				if (fileStream != NULL)
+				{
+					hr = rootItem->AddFile(pFileObject->GetName().AllocSysString(), fileStream);
+					if (FAILED(hr))
+					{
+						// IMAPI_E_IMAGE_SIZE_LIMIT 0xc0aab120
+						message.Format(_T("Failed IFsiDirectoryItem->AddFile(%s)!"),
+							(LPCTSTR)pFileObject->GetName());
+						pThis->SendMessage(WM_BURN_FINISHED, hr, (LPARAM)(LPCTSTR)message);
+						break;
+					}
+				}
+			}
+			else if (pObject->IsKindOf(RUNTIME_CLASS(Directory)))
+			{
+				Directory* pDirObject = (Directory*)pObject;
+				hr = rootItem->AddTree(pDirObject->GetPath().AllocSysString(), VARIANT_TRUE);
+
+				if (FAILED(hr))
+				{
+					// IMAPI_E_IMAGE_SIZE_LIMIT 0xc0aab120
+					message.Format(_T("Failed IFsiDirectoryItem->AddTree(%s)!"),
+						(LPCTSTR)pDirObject->GetName());
+					pThis->SendMessage(WM_BURN_FINISHED, hr, (LPARAM)(LPCTSTR)message);
+					break;
+				}
+			}
+
+			//
+			// Did user cancel?
+			//
+			if (pThis->GetCancelBurning())
+			{
+				pThis->SendMessage(WM_BURN_FINISHED, 0, (LPARAM)_T("User Canceled!"));
+				hr = IMAPI_E_FSI_INTERNAL_ERROR;
+			}
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			// Create the result image
+			hr = image->CreateResultImage(&imageResult);
+			if (SUCCEEDED(hr))
+			{
+				//
+				// Get the stream
+				//
+				hr = imageResult->get_ImageStream(ppDataStream);
+				if (SUCCEEDED(hr))
+				{
+					returnVal = true;
+				}
+				else
+				{
+					pThis->SendMessage(WM_BURN_FINISHED, hr,
+						(LPARAM)_T("Failed IFileSystemImageResult->get_ImageStream!"));
+				}
+
+			}
+			else
+			{
+				pThis->SendMessage(WM_BURN_FINISHED, hr,
+					(LPARAM)_T("Failed IFileSystemImage->CreateResultImage!"));
+			}
+		}
+	}
+	else
+	{
+		pThis->SendMessage(WM_BURN_FINISHED, hr, (LPARAM)_T("Failed IFileSystemImage->getRoot"));
+	}
+
+	//
+	// Cleanup
+	//
+	if (image != NULL)
+		image->Release();
+	if (imageResult != NULL)
+		imageResult->Release();
+	if (rootItem != NULL)
+		rootItem->Release();
+
+	return returnVal;
 }
 
 BOOL CCdBurnAppDlg::OnInitDialog()
