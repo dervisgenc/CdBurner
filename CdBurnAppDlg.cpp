@@ -150,6 +150,7 @@ UINT CCdBurnAppDlg::BurnThread(LPVOID pParam)
 	else
 	{
 		DiscFormat2Data discFormat;
+		discFormat.initialize(&discRecorder, CLIENT_NAME);
 		if(!discRecorder.AcquireExclusiveAccess(true, CLIENT_NAME)){
 			errorMessage.Format(_T("Failed: %s is exclusive owner"),
 				(LPCTSTR)discRecorder.ExclusiveAccessOwner());
